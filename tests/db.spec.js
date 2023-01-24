@@ -58,7 +58,7 @@ describe('Database', () => {
         }));
       });
     });
-    xdescribe('getOpenReports', () => {
+    describe('getOpenReports', () => {
       beforeAll(async() => {
         await client.query(`
           INSERT INTO comments("reportId", content)
@@ -113,7 +113,7 @@ describe('Database', () => {
       });
       
     })
-    xdescribe('closeReport', () => {
+    describe('closeReport', () => {
       let message, report;
       beforeAll(async() => {
       })
@@ -144,7 +144,7 @@ describe('Database', () => {
         expect(message).toEqual({message: "Report successfully closed!"});
       });
     })
-    xdescribe('createReportComment', () => {
+    describe('createReportComment', () => {
       const commentFields = {content: 'something strange is happening in this galaxy, for sure'}
       const password = 'DontWatchTooLong';
       
