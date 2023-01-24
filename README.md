@@ -1,3 +1,10 @@
+Changes being made:
+
+
+
+
+
+
 # Project Phenomena
 
 Your job, should you accept it, is to build and deploy an API for a top secret message board.
