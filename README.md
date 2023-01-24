@@ -1,4 +1,4 @@
-Changes being made:
+Changes being made: Finished closePost function 
 
 
 
