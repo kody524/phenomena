@@ -21,22 +21,27 @@ const client = new Client(connection);
 async function getOpenReports() {
   try {
     // first load all of the reports which are open
+    const{rows:[report]} = await client.query(`
+    SELECT * FROM reports WHERE "isOpen"=true;
     
-
+    `)
+      console.log('reports:',report)
     // then load the comments only for those reports, using a
     // WHERE "reportId" IN () clause
-
-    
+      const {rows} = await client.query(`
+      SELECT * FROM comments WHERE "reportId" >0;
+      `)
+    console.log("content",rows)
     // then, build two new properties on each report:
     // .comments for the comments which go with it
     //    it should be an array, even if there are none
     // .isExpired if the expiration date is before now
     //    you can use Date.parse(report.expirationDate) < new Date()
     // also, remove the password from all reports
-
+    
 
     // finally, return the reports
-  
+  return report
 
   } catch (error) {
     throw error;
