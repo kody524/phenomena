@@ -1,5 +1,5 @@
 // Require the Client constructor from the pg package
-const {Client} = require('pg')
+const { Client } = require('pg')
 
 // Create a constant, CONNECTION_STRING, from either process.env.DATABASE_URL or postgres://localhost:5432/phenomena-dev
 const connection = "postgres://localhost:5432/phenomena-dev";
@@ -21,12 +21,12 @@ const client = new Client(connection);
 async function getOpenReports() {
   try {
     // first load all of the reports which are open
-    
+
 
     // then load the comments only for those reports, using a
     // WHERE "reportId" IN () clause
 
-    
+
     // then, build two new properties on each report:
     // .comments for the comments which go with it
     //    it should be an array, even if there are none
@@ -36,7 +36,7 @@ async function getOpenReports() {
 
 
     // finally, return the reports
-  
+
 
   } catch (error) {
     throw error;
@@ -56,24 +56,20 @@ async function getOpenReports() {
  */
 async function createReport(reportFields) {
   // Get all of the fields from the passed in object
-const {id,title, location, description, password,isOpen, expirationDate} = reportFields;
+  const { id, title, location, description, password, isOpen, expirationDate } = reportFields;
 
   try {
     // insert the correct fields into the reports table
     // remember to return the new row from the query
-    const {rows:[report]} = await client.query(`
-    INSERT INTO reports(title, location, description, password)
-    VALUES($1, $2, $3, $4)
-    RETURNING id,title,location,description,"isOpen","expirationDate";
-    `,[title,location,description,password]);
-
     // remove the password from the returned row
-    
-
     // return the new report
-    
-    return report;
+    const { rows: [report] } = await client.query(`
+      INSERT INTO reports(title, location, description, password)
+      VALUES($1, $2, $3, $4)
+      RETURNING id,title,location,description,"isOpen","expirationDate";
+    `, [title, location, description, password]);
 
+    return report;
   } catch (error) {
     throw error;
   }
@@ -96,15 +92,14 @@ const {id,title, location, description, password,isOpen, expirationDate} = repor
 async function _getReport(reportId) {
   try {
     // SELECT the report with id equal to reportId
-    const report = await client.query(`
-    
-    SELECT * FROM reports
-    WHERE id=$1;
-    `,[reportId])
-
     // return the report
-    return {report}
+    const { rows: [report] } = await client.query(`
+    SELECT *
+    FROM reports
+    WHERE id=$1;
+    `, [reportId])
 
+    return report;
   } catch (error) {
     throw error;
   }
@@ -122,22 +117,22 @@ async function _getReport(reportId) {
 async function closeReport(reportId, password) {
   try {
     // First, actually grab the report with that id
-    
+
 
     // If it doesn't exist, throw an error with a useful message
-    
-  
+
+
     // If the passwords don't match, throw an error
-    
+
 
     // If it has already been closed, throw an error with a useful message
-    
+
 
     // Finally, update the report if there are no failures, as above
-    
+
 
     // Return a message stating that the report has been closed
-    
+
 
   } catch (error) {
     throw error;
@@ -164,23 +159,23 @@ async function createReportComment(reportId, commentFields) {
 
 
     // if it wasn't found, throw an error saying so
-    
+
 
     // if it is not open, throw an error saying so
-    
+
 
     // if the current date is past the expiration, throw an error saying so
     // you can use Date.parse(report.expirationDate) < new Date() to check
-    
+
 
     // all go: insert a comment
-    
+
 
     // then update the expiration date to a day from now
-    
+
 
     // finally, return the comment
-    
+
 
   } catch (error) {
     throw error;
