@@ -1,5 +1,5 @@
 // Require the Client constructor from the pg package
-const { Client } = require('pg')
+const { Client, DatabaseError } = require('pg')
 
 // Create a constant, CONNECTION_STRING, from either process.env.DATABASE_URL or postgres://localhost:5432/phenomena-dev
 const connection = "postgres://localhost:5432/phenomena-dev";
@@ -21,25 +21,30 @@ const client = new Client(connection);
 async function getOpenReports() {
   try {
     // first load all of the reports which are open
-    const{rows:[report]} = await client.query(`
-    SELECT * FROM reports WHERE "isOpen"=true;
+    const { rows: reports } = await client.query(`
+      SELECT * FROM reports 
+      WHERE "isOpen"=true;
+      
+      `)
 
-    `)
-      console.log('reports:',report)
+    console.log('reports:', reports);
+
+
+
     // then load the comments only for those reports, using a
     // WHERE "reportId" IN () clause
 
-    
+
     // then, build two new properties on each report:
     // .comments for the comments which go with it
     //    it should be an array, even if there are none
     // .isExpired if the expiration date is before now
     //    you can use Date.parse(report.expirationDate) < new Date()
     // also, remove the password from all reports
-    
+
 
     // finally, return the reports
-  
+
 
   } catch (error) {
     throw error;
@@ -125,22 +130,22 @@ async function closeReport(reportId, password) {
     FROM reports
     WHERE id=$1;
     `, [reportId]);
-      
+
     // If it doesn't exist, throw an error with a useful message
-    if(!report){
+    if (!report) {
       throw new Error('Report does not exist with that id')
 
-    }else if(password!==report.password){
+    } else if (password !== report.password) {
       throw new Error('Password incorrect for this report, please try again')
-    }else if(!report.isOpen){
+    } else if (!report.isOpen) {
       throw new Error('This report has already been closed')
-    }else{
+    } else {
       await client.query(`
       UPDATE reports 
       SET "isOpen"=false
       WHERE password=$1
       ;
-      `,[password])
+      `, [password])
     }
 
     // If the passwords don't match, throw an error
@@ -153,7 +158,7 @@ async function closeReport(reportId, password) {
 
 
     // Return a message stating that the report has been closed
-   return  {message: "Report successfully closed!"}
+    return { message: "Report successfully closed!" }
 
   } catch (error) {
     throw error;
@@ -174,9 +179,16 @@ async function closeReport(reportId, password) {
 async function createReportComment(reportId, commentFields) {
   // read off the content from the commentFields
 
+  const { content } = commentFields;
+
+  console.log("content:", content);
+  console.log("reportId:", reportId);
+
 
   try {
     // grab the report we are going to be commenting on
+    const report = await _getReport(reportId);
+    console.log("report:", report);
 
 
     // if it wasn't found, throw an error saying so
@@ -187,6 +199,30 @@ async function createReportComment(reportId, commentFields) {
 
     // if the current date is past the expiration, throw an error saying so
     // you can use Date.parse(report.expirationDate) < new Date() to check
+
+    if (!report) {
+      throw new Error('That report does not exist, no comment has been made');
+    } else if (!report.isOpen) {
+      throw new Error('That report has been closed, no comment has been made');
+    } else if (Date.parse(report.expirationDate) < new Date()) {
+      throw new Error('The discussion time on this report has expired, no comment has been made');
+    } else {
+      const comment = await client.query(`
+        INSERT INTO comments(content)
+        VALUES($1)
+        WHERE "reportId"=(${reportId})
+        RETURNING content;
+      `, [content]);
+
+      console.log('comment:', comment);
+      return comment;
+
+    }
+
+
+
+
+
 
 
     // all go: insert a comment
