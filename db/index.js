@@ -25,10 +25,13 @@ async function getOpenReports() {
     SELECT * FROM reports WHERE "isOpen"=true;
 
     `)
-      console.log('reports:',report)
+      
     // then load the comments only for those reports, using a
     // WHERE "reportId" IN () clause
-
+   const {rows:[content]} = await client.query(`
+   SELECT * FROM comments
+   WHERE "reportId"=$1;
+  `,[report.id])
     
     // then, build two new properties on each report:
     // .comments for the comments which go with it
@@ -173,30 +176,51 @@ async function closeReport(reportId, password) {
  */
 async function createReportComment(reportId, commentFields) {
   // read off the content from the commentFields
+const {content}= commentFields
 
 
   try {
     // grab the report we are going to be commenting on
-
+    const { rows: [report] } = await client.query(`
+    SELECT *
+    FROM reports
+    WHERE id=$1;
+    `, [reportId]);
 
     // if it wasn't found, throw an error saying so
-
+   if(!report){
+    throw new Error('That report does not exist, no comment has been made')
+   }
 
     // if it is not open, throw an error saying so
-
+   else if(!report.isOpen){
+    throw new Error('That report has been closed, no comment has been made')
+   }
 
     // if the current date is past the expiration, throw an error saying so
     // you can use Date.parse(report.expirationDate) < new Date() to check
-
+   else if(Date.parse(report.expirationDate) < new Date()){
+    throw new Error('The discussion time on this report has expired, no comment has been made')
+   }
 
     // all go: insert a comment
-
+   else{
+   const comment =  await client.query(`
+    INSERT INTO comments(content)
+    VALUES($1)
+    RETURNING *;
+    `,[content])
+   }
 
     // then update the expiration date to a day from now
-
+    await client.query(`
+    UPDATE comments
+    SET "expirationDate" = CURRENT_TIMESTAMP + interval '1 day'
+    WHERE id=$1
+    `,[reportId])
 
     // finally, return the comment
-
+    return comment.content
 
   } catch (error) {
     throw error;
