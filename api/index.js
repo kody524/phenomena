@@ -19,6 +19,10 @@ const {
  * - on success, it should send back an object like { reports: theReports }
  * - on caught error, call next(error)
  */
+apiRouter.get('/',(req,res)=>{
+  res.send('<h1>You hit the wrong path! Add/reports and see what happens!</h1>')
+})
+
 apiRouter.get("/reports", async (req, res, next) => {
   try {
     const reports = await getOpenReports();

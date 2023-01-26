@@ -19,6 +19,9 @@ server.use(morgan("dev"));
 server.use(bodyParser.json());
 // Have the server use bodyParser.json()
 // Have the server use your api router with prefix '/api'
+server.get('/',(req,res)=>{
+  res.send('<h1>Welcome to Phenomena</h1>')
+})
 server.use("/api", apiRouter);
 // Import the client from your db/index.js
 
