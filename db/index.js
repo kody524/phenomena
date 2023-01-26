@@ -21,8 +21,34 @@ const client = new Client(connection);
 async function getOpenReports() {
   try {
     // first load all of the reports which are open
+   const {rows} = await client.query(`
+   SELECT * 
+    FROM reports 
+    WHERE "isOpen"=true;
+   `)
+   
+    
+      const reports = rows.map(async(report) => {
+
+        const {rows:[content]} = await client.query(`
+        SELECT * FROM comments WHERE "reportId"=$1;
+        `, [report.id])
+       report.comments = [content]
+        report.password = null;
+        if (Date.parse(report.expirationDate) < new Date()) {
+          report.isExpired = true;
+        } else {
+          report.isExpired = false;
+        }
+        
+        
+        return report
+        
+  })
+      
     // then load the comments only for those reports, using a
     // WHERE "reportId" IN () clause
+    
     // then, build two new properties on each report:
     // .comments for the comments which go with it
     //    it should be an array, even if there are none
@@ -31,26 +57,41 @@ async function getOpenReports() {
     // also, remove the password from all reports
     // finally, return the reports
     const { rows } = await client.query(`
-   SELECT *
-    FROM reports
-    WHERE "isOpen"=true;
-   `)
-    const reports = rows.map(async (report) => {
-      const { rows: [content] } = await client.query(`
-        SELECT *
-        FROM comments
-        WHERE "reportId"=$1;
-        `, [report.id])
-      report.comments = [content]
-      report.password = null;
-      if (Date.parse(report.expirationDate) < new Date()) {
-        report.isExpired = true;
+    SELECT * 
+    FROM reports 
+    WHERE "isOpen"=true
+  `);
+
+    const openReports = rows.map(report => {
+      let isExpired;
+      const now = Date.now();
+      const expirationDate = new Date(report.expirationDate).getTime();
+      if (now > expirationDate) {
+        isExpired = true;
       } else {
-        report.isExpired = false;
+        isExpired = false;
       }
-      return report;
-    })
-    return Promise.all(reports)
+
+      const commentsQuery = `
+      SELECT *
+      FROM comments
+      WHERE report_id=$1
+    `;
+
+      return {
+        id: report.id,
+        title: report.title,
+        location: report.location,
+        description: report.description,
+        password: report.password,
+        isOpen: report.isOpen,
+        expirationDate: report.expirationDate,
+        isExpired: isExpired,
+        comment: client.query(commentsQuery, [report.id])
+      }
+    });
+
+    return openReports;
   } catch (error) {
     console.error(error);
     throw error;
@@ -185,42 +226,31 @@ async function closeReport(reportId, password) {
  */
 async function createReportComment(reportId, commentFields) {
   // read off the content from the commentFields
-  const comment = commentFields.content
+
+
   try {
     // grab the report we are going to be commenting on
-    const { rows: [report] } = await client.query(`
-    SELECT *
-    FROM reports
-    WHERE id=$1;
-    `, [reportId]);
+
+
     // if it wasn't found, throw an error saying so
-    if (!report) {
-      throw new Error('That report does not exist, no comment has been made')
-    }
+
+
     // if it is not open, throw an error saying so
-    else if (!report.isOpen) {
-      throw new Error('That report has been closed, no comment has been made')
-    }
+
+
     // if the current date is past the expiration, throw an error saying so
     // you can use Date.parse(report.expirationDate) < new Date() to check
-    else if (Date.parse(report.expirationDate) < new Date()) {
-      throw new Error('The discussion time on this report has expired, no comment has been made')
-    }
+
+
     // all go: insert a comment
-    const { rows: [content] } = await client.query(`
-    INSERT INTO comments(content)
-    VALUES($1)
-    RETURNING *;
-    `, [comment])
+
+
     // then update the expiration date to a day from now
-    await client.query(`
-    UPDATE reports
-          SET "expirationDate" = CURRENT_TIMESTAMP + interval '1 day'
-          WHERE id=$1
-          RETURNING *;
-    `, [reportId])
+
+
     // finally, return the comment
-    return content
+
+
   } catch (error) {
     throw error;
   }
