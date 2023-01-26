@@ -56,42 +56,9 @@ async function getOpenReports() {
     //    you can use Date.parse(report.expirationDate) < new Date()
     // also, remove the password from all reports
     // finally, return the reports
-    const { rows } = await client.query(`
-    SELECT * 
-    FROM reports 
-    WHERE "isOpen"=true
-  `);
+    
+   return Promise.all(reports)
 
-    const openReports = rows.map(report => {
-      let isExpired;
-      const now = Date.now();
-      const expirationDate = new Date(report.expirationDate).getTime();
-      if (now > expirationDate) {
-        isExpired = true;
-      } else {
-        isExpired = false;
-      }
-
-      const commentsQuery = `
-      SELECT *
-      FROM comments
-      WHERE report_id=$1
-    `;
-
-      return {
-        id: report.id,
-        title: report.title,
-        location: report.location,
-        description: report.description,
-        password: report.password,
-        isOpen: report.isOpen,
-        expirationDate: report.expirationDate,
-        isExpired: isExpired,
-        comment: client.query(commentsQuery, [report.id])
-      }
-    });
-
-    return openReports;
   } catch (error) {
     console.error(error);
     throw error;
