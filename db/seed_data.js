@@ -46,9 +46,8 @@ async function buildTables() {
         description TEXT NOT NULL,
         password VARCHAR(255) NOT NULL,
         "isOpen" BOOLEAN DEFAULT true,
-        "expirationDate" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP + interval '3 day'
+        "expirationDate" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP + interval '1 day'
       );
-
       CREATE TABLE comments(
         id SERIAL PRIMARY KEY,
         "reportId" INTEGER REFERENCES reports(id),
